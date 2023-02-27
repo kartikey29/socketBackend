@@ -8,7 +8,7 @@ const getUser = async (req, res) => {
     return res
       .status(200)
       .send({ message: "login success", data: req.user, token });
-  } catch (e) {
+  } catch (error) {
     return res.status(400).send({ error });
   }
 };

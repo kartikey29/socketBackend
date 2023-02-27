@@ -13,8 +13,11 @@ const connection = require("./scr/db/connection");
 connection();
 
 const userRoute = require("./scr/routes/user.route");
+const chatRoute = require("./scr/routes/chat.route");
 
 app.use("/user", userRoute);
+app.use("/chat", chatRoute);
+let onlineUsers = [];
 
 io.use((socket, next) => {
   const id = socket.handshake.auth.id;
@@ -27,9 +30,53 @@ io.use((socket, next) => {
 
 io.on("connection", (socket) => {
   console.log("connection");
+
+  //recieve message from sender
   socket.on("hello", (e1) => {
     console.log(e1);
     console.log(socket.id);
+    //send message to reciver
+    console.log(e1.recieverId);
+    io.to(e1.recieverId).emit("messageRecieved", {
+      senderId: socket.id,
+      _id: Math.random().toString(),
+      recieverId: e1.recieverId,
+      senderName: e1.senderName,
+      message: e1.message,
+      createdAt: new Date(new Date().toUTCString()),
+    });
+    io.to(socket.id).emit("messageRecieved", {
+      senderId: socket.id,
+      recieverId: e1.recieverId,
+      _id: Math.random().toString(),
+      senderName: e1.senderName,
+      message: e1.message,
+      createdAt: new Date(new Date().toUTCString()),
+    });
+    io.to(e1.recieverId).emit("notify", {
+      senderId: socket.id,
+      _id: Math.random().toString(),
+      recieverId: e1.recieverId,
+      senderName: e1.senderName,
+      message: e1.message,
+      createdAt: new Date(new Date().toUTCString()),
+    });
+  });
+  socket.on("disconnect", () => {
+    onlineUsers = onlineUsers.filter((user) => {
+      return socket.id != user;
+    });
+    console.log("disconnet");
+    io.emit("get-all-user", onlineUsers, () => {
+      console.log(onlineUsers);
+    });
+  });
+  if (!onlineUsers.some((user) => user === socket.id)) {
+    onlineUsers.push(socket.id);
+    console.log("new user is here!", onlineUsers);
+  }
+  io.emit("get-all-user", onlineUsers, () => {
+    console.log("emit all users con");
   });
 });
 
