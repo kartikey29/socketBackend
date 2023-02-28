@@ -33,10 +33,6 @@ io.on("connection", (socket) => {
 
   //recieve message from sender
   socket.on("hello", (e1) => {
-    console.log(e1);
-    console.log(socket.id);
-    //send message to reciver
-    console.log(e1.recieverId);
     io.to(e1.recieverId).emit("messageRecieved", {
       senderId: socket.id,
       _id: Math.random().toString(),
@@ -61,6 +57,9 @@ io.on("connection", (socket) => {
       message: e1.message,
       createdAt: new Date(new Date().toUTCString()),
     });
+  });
+  socket.on("typing", (e) => {
+    io.to(e.recieverId).emit("typing", e);
   });
   socket.on("disconnect", () => {
     onlineUsers = onlineUsers.filter((user) => {
